@@ -4,7 +4,7 @@ from pyzbar.pyzbar import decode as qrCodeDecode
 import time
 
 
-capture = cv2.VideoCapture('samples.data/dada.mp4') #kada zelimo video
+capture = cv2.VideoCapture('samples.data/test2.mp4') #kada zelimo video
 #capture = cv2.VideoCapture(0)  #kada zelimo live kameru
 #capture = cv2.imread('nesto.jpg') #TODO za slike moram napravit
 widthHeightTarget = 320

@@ -4,7 +4,7 @@ from pyzbar.pyzbar import decode as qrCodeDecode
 from pylibdmtx.pylibdmtx import decode as dmCodeDecode
 
 qr = qrCodeDecode(cv2.imread('frame.png'))
-dx = dmCodeDecode(cv2.imread('deni.jpg'))
+dx = dmCodeDecode(cv2.imread('dataMatrixCode.jpg'))
 print(dx)
 print(qr)
 
