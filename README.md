@@ -1,7 +1,6 @@
 # pythonDiplomski
-Config files for my GitHub profile.
 
-
+**Object detection and barcode reading using YOLOv4 and openCV **
 
 - Main program is called program.py where is object detection and barcode reader united as one.
 - barcodeRead.py is only for reading barcodes from camera or picture.
