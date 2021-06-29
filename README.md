@@ -15,5 +15,6 @@ If you want to run on normal yolov4.weight file:
 - use coco.names data set.
 - Normal yolov4 weight can be downloaded here: https://drive.google.com/file/d/1St_V0EcCTNc85VEvxCHrgeDjxZpWu4kS/view?usp=sharing 
 
-In samples.data folder you can find basic videos and photos which on you can test on.
-
+Folder structure:
+ - In samples.data folder you can find basic videos and photos which on you can test on.
+ - Every result will be saved in outputs folder(currently overwrite function is acctive which means that second result will overwrite first result)
