@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import time
 
 capture = cv2.VideoCapture(0)
 widthAndHeight = 320
@@ -17,8 +18,8 @@ modelConf = r'C:\Users\Denis\Desktop\Diplomski\pythonProject\model.data\yolov4-h
 modelWeig = r'C:\Users\Denis\Desktop\Diplomski\pythonProject\model.data\yolov4-helmet-detection.weights'
 net = cv2.dnn.readNetFromDarknet(modelConf, modelWeig)
 
-net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
-net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV) #tu mozemo odabrat i CUDA ako imamo graficku i drivere isntalirane
+net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU) #isto tako mozemo i ovdje odabrati CUDA ako imamo graficku, graficka puno brze obraduje sliku nego CPU
 colors = [tuple(255 * np.random.rand(3)) for i in range(5)]
 
 
@@ -53,7 +54,8 @@ while True:
     success, img = capture.read()
     blob = cv2.dnn.blobFromImage(img, 1/255, (widthAndHeight, widthAndHeight), [0, 0, 0], 1, crop=False)
     net.setInput(blob)
-    layerNames = net.getLayerNames()
+    startTime = time.time()
+    layerNames = net.getLayerNames() #s ovim cemo dobiti imena svih nasih layera
     #print(layerNames)
     outPutNames = [layerNames[i[0] - 1] for i in net.getUnconnectedOutLayers()]
     #print(outPutNames)
@@ -63,5 +65,8 @@ while True:
     #print(outputs[2].shape)
     #print(outputs[0][0])
     findObjects(outputs, img)
+
+    print('FPS {:.1f}'.format(1/(time.time() - startTime)))
+
     cv2.imshow('image', img)
     cv2.waitKey(1)

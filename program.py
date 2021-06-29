@@ -4,12 +4,18 @@ from pyzbar.pyzbar import decode as qrCodeDecode
 import time
 
 
-capture = cv2.VideoCapture('samples.data/test2.mp4') #kada zelimo video
+capture = cv2.VideoCapture('samples.data/test1.mp4') #kada zelimo video
+writer = None
 #capture = cv2.VideoCapture(0)  #kada zelimo live kameru
 #capture = cv2.imread('nesto.jpg') #TODO za slike moram napravit
 widthHeightTarget = 320
 confThreshHold = 0.5
 nmsThreshHold = 0.3 #sto je broj manji to ce threshhold biti agresivniji i imat cemo manji broj bboxova unutar bboxova
+
+frame_width = int(capture.get(3))
+frame_height = int(capture.get(4))
+
+size = (frame_width, frame_height)
 
 classesFile = 'model.data/custom.names'
 classNames = []
@@ -64,9 +70,13 @@ def findObjects(outputs, img):
         #corner points x+w i y+h
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
         cv2.putText(img, f'{classNames[classIds[i]].upper()} {int(confValue[i] * 100)}%', (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+        decodeBarcodes(img)
         #cv2.polylines(img, [points], True, color, 4)
         #textPoints = barcode.rect
         #cv2.putText(img, data, (textPoints[0], textPoints[1]), cv2.FONT_HERSHEY_PLAIN, 0.9, color, 2)
+
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+writer = cv2.VideoWriter('outputs/result.avi', fourcc, 20, size)
 
 while True:
     success, img = capture.read()
@@ -91,9 +101,16 @@ while True:
     # 300/1200/4800 je broj of bounding boxes , dok broj 8 znaci 1-center x, 2-center y, 3-w, 4-h, 5-confidance da se ono sto trazimo nalazi tamo, a ostale 3 vrijednosti su predictions probabilites ostalih klasa
     #print(outputs[0][0]) primjer outputa jednog elementa
     findObjects(outputs, img)
-    decodeBarcodes(img)
+
+    if success == True:
+        writer.write(img)
+        if cv2.waitKey(1) & 0xFF == ord('s'):
+            break
 
     print('FPS {:.1f}'.format(1 / (time.time() - startTime)))
 
     cv2.imshow('Image', img)
     cv2.waitKey(1)
+
+writer.release()
+capture.release()
