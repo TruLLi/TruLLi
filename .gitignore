@@ -1,6 +1,7 @@
 /model.data/yolov4-helmet-detection.weights
+/model.data/yolov4.weights
 /samples.data/people.mp4
 /samples.data/test1.mp4
 /samples.data/test2.mp4
 /BarcodeReader/
-/outputs
+/outputs/

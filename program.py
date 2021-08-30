@@ -43,7 +43,7 @@ def decodeBarcodes(img):
         textPoints = barcode.rect  # ovo su pointovi za text kada procita barcode
         cv2.putText(img, myData, (textPoints[0], textPoints[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 217, 255), 2)
 
-def decodeUsingDynamsoft(img):
+def decodeBarcodesUsingDynamsoft(img):
     color = (0, 0, 255)
     thickness = 2
     textResults = reader.decode_buffer(img);
@@ -59,6 +59,7 @@ def decodeUsingDynamsoft(img):
                        cv2.FONT_HERSHEY_SIMPLEX, 1, color, thickness)
 
 
+#glavna funkcija koja trazi objekte na slici / video zapisu / live kameri
 def findObjects(outputs, img):
     hT, wT, cT = img.shape #hT - height, wT- width, cT - channels
     bbox = [] #bounding box
@@ -80,23 +81,17 @@ def findObjects(outputs, img):
     indexs = cv2.dnn.NMSBoxes(bbox, confValue, confThreshHold, nmsThreshHold)
     #print(indexs)
     for color, i in zip(colors, indexs):
-        #data = barcode.data.decode('utf-8')
-        #points = np.array([barcode.polygon], np.int32)
-        #points = points.reshape((-1, 1, 2))
         i = i[0]
         box = bbox[i]
         x, y, w, h = box[0], box[1], box[2], box[3]
         #corner points x+w i y+h
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
         cv2.putText(img, f'{classNames[classIds[i]].upper()} {int(confValue[i] * 100)}%', (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-        decodeUsingDynamsoft(img)
-        #cv2.polylines(img, [points], True, color, 4)
-        #textPoints = barcode.rect
-        #cv2.putText(img, data, (textPoints[0], textPoints[1]), cv2.FONT_HERSHEY_PLAIN, 0.9, color, 2)
+        #decodeBarcodes(img) #funkcija za citanje barkodova ce se pozvati samo u slucaju ako ima uspjesnog pronalaska objekata koje trazimo
+        decodeBarcodesUsingDynamsoft(img)
 
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 writer = cv2.VideoWriter('outputs/result.avi', fourcc, 20, size)
-
 while True:
     success, img = capture.read()
     blob = cv2.dnn.blobFromImage(img, 1/255, (widthHeightTarget, widthHeightTarget), [0, 0, 0], 1, crop=False) #ovo ce sliku pretvorit u blob
@@ -119,7 +114,12 @@ while True:
     # rezultat ovoga je matrix koji ima 300[0], 1200[1], 4800[2] redova i 8 razlicith stupaca
     # 300/1200/4800 je broj of bounding boxes , dok broj 8 znaci 1-center x, 2-center y, 3-w, 4-h, 5-confidance da se ono sto trazimo nalazi tamo, a ostale 3 vrijednosti su predictions probabilites ostalih klasa
     #print(outputs[0][0]) primjer outputa jednog elementa
+
     findObjects(outputs, img)
+    #saveResult(img, capture)
+    #ako nema outputs, foldera napravi ga
+    if not os.path.exists('outputs'):
+        os.mkdir('outputs')
 
     if success == True:
         writer.write(img)
