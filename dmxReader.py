@@ -27,7 +27,7 @@ def dataMat(image, bgr):
 
 bgr = (8, 70, 208)
 
-frame = cv2.imread('deni.jpg')
+frame = cv2.imread('samples.data/dataMatrixCode.jpg')
 code = dataMat(frame, bgr)
 print(code)
 cv2.imshow('Data Matrix reader', frame)

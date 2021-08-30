@@ -2,13 +2,13 @@ import cv2
 import numpy as np
 from pyzbar.pyzbar import decode as qrCodeDecode
 import time
-
+from dbr import *
 
 capture = cv2.VideoCapture('samples.data/test1.mp4') #kada zelimo video
 writer = None
 #capture = cv2.VideoCapture(0)  #kada zelimo live kameru
 #capture = cv2.imread('nesto.jpg') #TODO za slike moram napravit
-widthHeightTarget = 320
+widthHeightTarget = 190
 confThreshHold = 0.5
 nmsThreshHold = 0.3 #sto je broj manji to ce threshhold biti agresivniji i imat cemo manji broj bboxova unutar bboxova
 
@@ -31,6 +31,9 @@ net = cv2.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV) #tu mozemo odabrat i CUDA ako imamo graficku i drivere isntalirane
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU) #isto tako mozemo i ovdje odabrati CUDA ako imamo graficku, graficka puno brze obraduje sliku nego CPU
 
+reader = BarcodeReader()
+reader.init_license("t0068fQAAAHUCSUdIj65SoZfk8tKFuAjjt4DMH/W2hC/1wfgmChAn6p2ymFRrrMg+tX4sV65tWvHppcbRA9K1njK3re6G4Tg=")
+
 def decodeBarcodes(img):
     for barcode in qrCodeDecode(img):
         myData = barcode.data.decode('utf-8')
@@ -39,6 +42,22 @@ def decodeBarcodes(img):
         cv2.polylines(img, [points], True, (0, 255, 106), 4)  # dodavanje pointova oko barcodova kada ih procita
         textPoints = barcode.rect  # ovo su pointovi za text kada procita barcode
         cv2.putText(img, myData, (textPoints[0], textPoints[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 217, 255), 2)
+
+def decodeUsingDynamsoft(img):
+    color = (0, 0, 255)
+    thickness = 2
+    textResults = reader.decode_buffer(img);
+    if (textResults is not None):
+        for out in textResults:
+            points = out.localization_result.localization_points
+            cv2.line(img, points[0], points[1], color, thickness)
+            cv2.line(img, points[1], points[2], color, thickness)
+            cv2.line(img, points[2], points[3], color, thickness)
+            cv2.line(img, points[3], points[0], color, thickness)
+            cv2.putText(img, out.barcode_text,
+                       (min([point[0] for point in points]), min([point[1] for point in points])),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, color, thickness)
+
 
 def findObjects(outputs, img):
     hT, wT, cT = img.shape #hT - height, wT- width, cT - channels
@@ -70,7 +89,7 @@ def findObjects(outputs, img):
         #corner points x+w i y+h
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
         cv2.putText(img, f'{classNames[classIds[i]].upper()} {int(confValue[i] * 100)}%', (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-        decodeBarcodes(img)
+        decodeUsingDynamsoft(img)
         #cv2.polylines(img, [points], True, color, 4)
         #textPoints = barcode.rect
         #cv2.putText(img, data, (textPoints[0], textPoints[1]), cv2.FONT_HERSHEY_PLAIN, 0.9, color, 2)
