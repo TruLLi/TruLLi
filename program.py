@@ -1,51 +1,39 @@
 import cv2
 import numpy as np
 from pyzbar.pyzbar import decode as qrCodeDecode
-import os
 import time
+from dbr import *
 
-capture = cv2.VideoCapture('samples.data/test3.mp4') #kada zelimo video
-#capture = cv2.VideoCapture(0)  #kada zelimo live kameru
-#capture = cv2.imread('samples.data/test_picture_3.jpeg') #TODO za slike moram napravit
+capture = cv2.VideoCapture('samples.data/test1.mp4') #kada zelimo video
 writer = None
-widthHeightTarget = 320
+#capture = cv2.VideoCapture(0)  #kada zelimo live kameru
+#capture = cv2.imread('nesto.jpg') #TODO za slike moram napravit
+widthHeightTarget = 190
 confThreshHold = 0.5
 nmsThreshHold = 0.3 #sto je broj manji to ce threshhold biti agresivniji i imat cemo manji broj bboxova unutar bboxova
-colors = [tuple(255 * np.random.rand(3)) for i in range(5)]
-
-#inizijalizacija imena koje cemo koristit u prepoznavanju
-classesFile = 'model.data/custom.names'
-classNames = []
-with open(classesFile, 'rt') as f:
-    classNames = f.read().rstrip('\n').split('\n')
-
-#inizijalizacija modela
-modelConfiguration = 'model.data/yolov4-helmet.cfg'
-modelWeights = 'model.data/yolov4-helmet-detection.weights'
-net = cv2.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
-net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV) #tu mozemo odabrat i CUDA ako imamo graficku i drivere isntalirane
-net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU) #isto tako mozemo i ovdje odabrati CUDA ako imamo graficku, graficka puno brze obraduje sliku nego CPU
 
 frame_width = int(capture.get(3))
 frame_height = int(capture.get(4))
 
 size = (frame_width, frame_height)
 
+classesFile = 'model.data/custom.names'
+classNames = []
+with open(classesFile, 'rt') as f:
+    classNames = f.read().rstrip('\n').split('\n')
 
-#inizijalizacija writera koji ce spremit vrijednost u outputs folder ako loadamo video ili live kameru kao ulaz
-#funkcija koja sprema rezultat u outputs folder
-def saveResult(img, videoCapture):
-    if videoCapture.isOpened():
-        frame_width = int(videoCapture.get(3))
-        frame_height = int(videoCapture.get(4))
-        size = (frame_width, frame_height)
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        writer = cv2.VideoWriter('outputs/result.avi', fourcc, 20, size)
-        writer.write(img)
-    else:
-        cv2.imwrite('outputs/resultImg.jpg', img)
+modelConfiguration = 'model.data/yolov4-helmet.cfg'
+modelWeights = 'model.data/yolov4-helmet-detection.weights'
 
-#funkcija za citanje barkodova na slici / video zapisu / live kameri
+colors = [tuple(255 * np.random.rand(3)) for i in range(5)]
+
+net = cv2.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
+net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV) #tu mozemo odabrat i CUDA ako imamo graficku i drivere isntalirane
+net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU) #isto tako mozemo i ovdje odabrati CUDA ako imamo graficku, graficka puno brze obraduje sliku nego CPU
+
+reader = BarcodeReader()
+reader.init_license("t0068fQAAAHUCSUdIj65SoZfk8tKFuAjjt4DMH/W2hC/1wfgmChAn6p2ymFRrrMg+tX4sV65tWvHppcbRA9K1njK3re6G4Tg=")
+
 def decodeBarcodes(img):
     for barcode in qrCodeDecode(img):
         myData = barcode.data.decode('utf-8')
@@ -54,6 +42,22 @@ def decodeBarcodes(img):
         cv2.polylines(img, [points], True, (0, 255, 106), 4)  # dodavanje pointova oko barcodova kada ih procita
         textPoints = barcode.rect  # ovo su pointovi za text kada procita barcode
         cv2.putText(img, myData, (textPoints[0], textPoints[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 217, 255), 2)
+
+def decodeBarcodesUsingDynamsoft(img):
+    color = (0, 0, 255)
+    thickness = 2
+    textResults = reader.decode_buffer(img);
+    if (textResults is not None):
+        for out in textResults:
+            points = out.localization_result.localization_points
+            cv2.line(img, points[0], points[1], color, thickness)
+            cv2.line(img, points[1], points[2], color, thickness)
+            cv2.line(img, points[2], points[3], color, thickness)
+            cv2.line(img, points[3], points[0], color, thickness)
+            cv2.putText(img, out.barcode_text,
+                       (min([point[0] for point in points]), min([point[1] for point in points])),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, color, thickness)
+
 
 #glavna funkcija koja trazi objekte na slici / video zapisu / live kameri
 def findObjects(outputs, img):
@@ -83,7 +87,9 @@ def findObjects(outputs, img):
         #corner points x+w i y+h
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
         cv2.putText(img, f'{classNames[classIds[i]].upper()} {int(confValue[i] * 100)}%', (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-        decodeBarcodes(img) #funkcija za citanje barkodova ce se pozvati samo u slucaju ako ima uspjesnog pronalaska objekata koje trazimo
+        #decodeBarcodes(img) #funkcija za citanje barkodova ce se pozvati samo u slucaju ako ima uspjesnog pronalaska objekata koje trazimo
+        decodeBarcodesUsingDynamsoft(img)
+
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 writer = cv2.VideoWriter('outputs/result.avi', fourcc, 20, size)
 while True:
