@@ -4,9 +4,9 @@ from pyzbar.pyzbar import decode as qrCodeDecode
 import time
 from dbr import *
 
-capture = cv2.VideoCapture('samples.data/test1.mp4') #kada zelimo video
+#capture = cv2.VideoCapture('samples.data/test1.mp4') #kada zelimo video
 writer = None
-#capture = cv2.VideoCapture(0)  #kada zelimo live kameru
+capture = cv2.VideoCapture(0)  #kada zelimo live kameru
 #capture = cv2.imread('nesto.jpg') #TODO za slike moram napravit
 widthHeightTarget = 190
 confThreshHold = 0.5
@@ -46,7 +46,10 @@ def decodeBarcodes(img):
 def decodeBarcodesUsingDynamsoft(img):
     color = (0, 0, 255)
     thickness = 2
-    textResults = reader.decode_buffer(img);
+    textResults = reader.decode_buffer(img)
+    settings = reader.get_runtime_settings()
+    settings.barcode_format_ids = EnumBarcodeFormat.BF_QR_CODE | EnumBarcodeFormat.BF_DATAMATRIX | EnumBarcodeFormat.BF_PDF417 | EnumBarcodeFormat.BF_AZTEC
+    reader.update_runtime_settings(settings)
     if (textResults is not None):
         for out in textResults:
             points = out.localization_result.localization_points
@@ -88,7 +91,6 @@ def findObjects(outputs, img):
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
         cv2.putText(img, f'{classNames[classIds[i]].upper()} {int(confValue[i] * 100)}%', (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
         #decodeBarcodes(img) #funkcija za citanje barkodova ce se pozvati samo u slucaju ako ima uspjesnog pronalaska objekata koje trazimo
-        decodeBarcodesUsingDynamsoft(img)
 
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 writer = cv2.VideoWriter('outputs/result.avi', fourcc, 20, size)
@@ -116,6 +118,7 @@ while True:
     #print(outputs[0][0]) primjer outputa jednog elementa
 
     findObjects(outputs, img)
+    decodeBarcodesUsingDynamsoft(img)
     #saveResult(img, capture)
     #ako nema outputs, foldera napravi ga
     if not os.path.exists('outputs'):
