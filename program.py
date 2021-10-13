@@ -4,9 +4,10 @@ from pyzbar.pyzbar import decode as qrCodeDecode
 import time
 from dbr import *
 
-#capture = cv2.VideoCapture('samples.data/test1.mp4') #kada zelimo video
+#capture = cv2.VideoCapture('rtsp://live:Demo123!@192.168.103.117:554?subtype=0') #kada zelimo video
+capture = cv2.VideoCapture(0) #kada zelimo video
 writer = None
-capture = cv2.VideoCapture(0)  #kada zelimo live kameru
+#capture = cv2.VideoCapture(0)  #kada zelimo live kameru
 #capture = cv2.imread('nesto.jpg') #TODO za slike moram napravit
 widthHeightTarget = 190
 confThreshHold = 0.5
@@ -32,7 +33,7 @@ net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV) #tu mozemo odabrat i CUDA a
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU) #isto tako mozemo i ovdje odabrati CUDA ako imamo graficku, graficka puno brze obraduje sliku nego CPU
 
 reader = BarcodeReader()
-reader.init_license("t0068fQAAAHUCSUdIj65SoZfk8tKFuAjjt4DMH/W2hC/1wfgmChAn6p2ymFRrrMg+tX4sV65tWvHppcbRA9K1njK3re6G4Tg=")
+reader.init_license("t0070fQAAAFalWFBT1Q+rIAdJI7q1JgdzrPoL4pA2w64jRwHSwwJ2sqqR/sRpFS0Yn5DDorqDeDbZ/Iury+7CCyOQ/LcJTxQbiQ==")
 
 def decodeBarcodes(img):
     for barcode in qrCodeDecode(img):
@@ -48,7 +49,7 @@ def decodeBarcodesUsingDynamsoft(img):
     thickness = 2
     textResults = reader.decode_buffer(img)
     settings = reader.get_runtime_settings()
-    settings.barcode_format_ids = EnumBarcodeFormat.BF_QR_CODE | EnumBarcodeFormat.BF_DATAMATRIX | EnumBarcodeFormat.BF_PDF417 | EnumBarcodeFormat.BF_AZTEC
+    settings.barcode_format_ids = EnumBarcodeFormat.BF_QR_CODE | EnumBarcodeFormat.BF_DATAMATRIX | EnumBarcodeFormat.BF_PDF417 | EnumBarcodeFormat.BF_AZTEC | EnumBarcodeFormat.BF_MICRO_QR
     reader.update_runtime_settings(settings)
     if (textResults is not None):
         for out in textResults:
